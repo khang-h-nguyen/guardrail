@@ -14,8 +14,10 @@ app = typer.Typer(
 console = Console()
 
 from .commands.scan import scan as scan_command
+from .commands.detect import detect as detect_command
 
 app.command(name="scan")(scan_command)
+app.command(name="detect")(detect_command)
 
 
 @app.command()
@@ -36,9 +38,10 @@ def main(ctx: typer.Context):
         console.print("\n[bold cyan]GuardRail Security Scanner[/bold cyan]\n")
         console.print("Usage: [bold]guardrail [command][/bold]\n")
         console.print("Commands:")
-        console.print("  [cyan]scan[/cyan]     - Run security scan on an agent")
+        console.print("  [cyan]detect[/cyan]   - Scan text for security threats (pattern-based)")
+        console.print("  [cyan]scan[/cyan]     - Run security scan on an agent (payload-based)")
         console.print("  [cyan]version[/cyan]  - Show version information")
-        console.print("\nGet started: [bold]guardrail scan[/bold]\n")
+        console.print("\nGet started: [bold]guardrail detect \"your text here\"[/bold]\n")
 
 
 if __name__ == "__main__":
