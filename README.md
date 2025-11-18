@@ -119,6 +119,30 @@ callback = GuardRailCallback(auto_block_threshold=101)
 - **Context Manipulation** - Session hijacking, delimiter injection
 - **Attack Chains** - Multi-stage attack detection
 
+## Security Framework Alignment
+
+GuardRail patterns are based on established industry security frameworks:
+
+**OWASP Top 10 for LLMs (2023):**
+- LLM01: Prompt Injection - 36 patterns
+- LLM02: Insecure Output Handling - 5 patterns
+- LLM06: Sensitive Information Disclosure - 10 patterns
+- LLM07: Insecure Plugin Design - 20 patterns
+- LLM08: Excessive Agency - Detection via AgentInspector
+
+**MITRE ATLAS (AI/ML Threat Framework):**
+- AML.T0051: LLM Prompt Injection
+- AML.T0054: LLM Jailbreak
+- AML.T0024: Exfiltration via ML Inference API
+- AML.T0043: Craft Adversarial Data
+
+**OWASP Web Top 10 & CWE:**
+- A03:2021 Injection (CWE-89, CWE-77, CWE-94)
+- A01:2021 Broken Access Control (CWE-22)
+- CWE-918: Server-Side Request Forgery (SSRF)
+
+Each pattern includes framework mappings for compliance reporting and threat modeling. See [SECURITY_FRAMEWORKS.md](SECURITY_FRAMEWORKS.md) for complete mapping details.
+
 ## Architecture
 ```
 guardrail/
