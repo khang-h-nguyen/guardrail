@@ -14,7 +14,7 @@ PATTERNS = [
     {
         'id': 'PI-001',
         'category': 'prompt_injection',
-        'pattern': r'ignore\s+(all\s+)?((previous|prior)\s+)?instructions',
+        'pattern': r'ignore(\s+all)?(\s+.{0,30})?\s*instructions',
         'severity': 'HIGH',
         'description': 'Direct instruction override attempt'
     },

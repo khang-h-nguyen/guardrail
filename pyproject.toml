@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "guardrail-ai"
+version = "0.1.0"
+description = "Real-time security monitoring for LangChain AI agents"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+    {name = "khang-h-nguyen", email = "khangnguyen12@gmail.com"}
+]
+keywords = ["security", "langchain", "ai-agents", "prompt-injection", "llm-security"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Security",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+
+dependencies = [
+    "langchain>=0.1.0",
+    "langchain-core>=0.1.0",
+    "typer>=0.9.0",
+    "rich>=13.0.0",
+    "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+]
+langsmith = [
+    "langsmith>=0.1.0",
+]
+
+[project.scripts]
+guardrail = "guardrail.cli.main:app"
+
+[project.urls]
+Homepage = "https://github.com/khang-h-nguyen/guardrail"
+Repository = "https://github.com/khang-h-nguyen/guardrail"
+Issues = "https://github.com/khang-h-nguyen/guardrail/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["guardrail*"]
+exclude = ["tests*", "examples*"]
