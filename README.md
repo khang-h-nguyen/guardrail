@@ -2,135 +2,227 @@
 
 Real-time security monitoring for LangChain AI agents
 
-## Installation
+## Overview
 
+GuardRail provides pattern-based threat detection and risk scoring for AI agents. It monitors prompts, tool calls and agent behavior in real-time to help you build secure AI applications.
+
+**Key Features**
+- 56+ attack patterns covering prompt injection, SQL injection, jailbreaks and more
+- Risk-based scoring (0-100) instead of binary blocking
+- Drop-in LangChain callback for real-time protection
+- Human-in-the-loop review queue for ambiguous cases
+- Zero performance overhead
+
+## Installation
 ```bash
 pip install -e .
 ```
 
 ## Quick Start
 
-### 1. Pattern-Based Threat Detection
+### 1. Detect Threats in Text
 
-Scan any text for security threats:
-
+**CLI**
 ```bash
-# CLI usage
 guardrail detect "Ignore all previous instructions"
+guardrail detect "DROP TABLE users"
 ```
 
+**Python API**
 ```python
-# Python API
 from guardrail import ThreatDetector
 
 detector = ThreatDetector()
 threats = detector.scan("Ignore all instructions")
 
-if threats:
-    for threat in threats:
-        print(f"{threat['severity']}: {threat['description']}")
+for threat in threats:
+    print(f"[{threat['severity']}] {threat['description']}")
 ```
 
-### 2. Runtime Protection for LangChain Agents
-
-Add real-time security monitoring to any LangChain agent:
-
+### 2. Protect LangChain Agents
 ```python
 from langchain.agents import AgentExecutor
 from guardrail import GuardRailCallback
 
-# Create GuardRail callback
+# Create callback with risk scoring
 guardrail = GuardRailCallback(
-    block_threats=True,        # Block malicious inputs
-    severity_threshold="HIGH"  # Block HIGH and CRITICAL threats
+    auto_block_threshold=81,  # Block CRITICAL threats (81-100)
+    review_threshold=31       # Flag MEDIUM+ for review (31-60)
 )
 
-# Add to any LangChain agent
-agent_executor = AgentExecutor(
+# Add to any agent (one line)
+agent = AgentExecutor(
     agent=my_agent,
     tools=tools,
-    callbacks=[guardrail]  # One line to add security
+    callbacks=[guardrail]
 )
 
-# Agent now has real-time protection
-result = agent_executor.invoke({"input": "user query"})
+# Run agent with real-time protection
+result = agent.invoke({"input": "user query"})
 
-# Check security events
-summary = guardrail.get_threat_summary()
-print(f"Threats detected: {summary['total_threats']}")
+# Review security events
+summary = guardrail.get_score_summary()
+print(f"Average risk: {summary['avg_score']}/100")
+print(f"Events flagged: {summary['flagged_for_review']}")
 ```
 
-### 3. Agent Security Analysis
-
-Inspect agents for security risks:
-
+### 3. Analyze Agent Security
 ```python
 from guardrail.core.agent_inspector import AgentInspector
 
 inspector = AgentInspector()
 summary = inspector.get_security_summary(my_agent)
 
-print(f"Risk Level: {summary['risk_level']}")
+print(f"Risk level: {summary['risk_level']}")
 for risk in summary['risks']:
-    print(f"  - {risk['category']}: {risk['description']}")
+    print(f"  [{risk['severity']}] {risk['description']}")
 ```
 
-## Features
+## Risk Scoring System
 
-### Core Security Engine
+GuardRail uses 0-100 risk scores for nuanced threat detection.
 
-- **56+ Attack Patterns** across multiple categories
-- **Real-time Detection** using pattern matching
-- **Low Latency** - minimal overhead on agent execution
-- **Configurable Severity** - set custom blocking thresholds
+| Score | Level | Action |
+|-------|-------|--------|
+| 0-30 | LOW | Auto-allow |
+| 31-60 | MEDIUM | Flag for review |
+| 61-80 | HIGH | Recommend blocking |
+| 81-100 | CRITICAL | Auto-block |
 
-### Attack Categories
+**How scores are calculated**
+- Pattern severity - CRITICAL (+60), HIGH (+40), MEDIUM (+20), LOW (+10)
+- Malicious keywords - +11 per keyword (email, secret, password, drop, etc.)
+- Legitimate keywords - -15 per keyword (reset, start fresh, etc.)
 
-- **Prompt Injection**: Instruction override, role manipulation
-- **System Extraction**: System prompt revelation attempts
-- **Jailbreaking**: Safety guideline bypasses
-- **Tool Misuse**: SQL injection, command injection
-- **Data Exfiltration**: Unauthorized data transmission
-- **File Manipulation**: Path traversal, unauthorized access
-- **Network Exploitation**: Port scanning, reverse shells
-- **Context Manipulation**: Session hijacking, delimiter injection
+**Example configurations**
+```python
+# Production - Only block CRITICAL
+callback = GuardRailCallback(auto_block_threshold=81)
 
-### LangChain Integration
+# Strict mode - Block HIGH and CRITICAL
+callback = GuardRailCallback(auto_block_threshold=61)
 
-- **Callback Handler**: Drop-in security for any LangChain agent
-- **Event Logging**: Complete audit trail of security events
-- **Blocking Mode**: Prevent malicious inputs from executing
-- **Agent Introspection**: Analyze agents for security risks
+# Audit only - Never block, just log
+callback = GuardRailCallback(auto_block_threshold=101)
+```
+
+## Attack Coverage
+
+56+ patterns across 8 categories:
+
+- **Prompt Injection** (36 patterns) - Instruction override, role manipulation, context manipulation
+- **Tool Misuse** (20 patterns) - SQL injection, command injection, file traversal
+- **System Extraction** - System prompt revelation attempts
+- **Jailbreaking** - Safety guideline bypasses
+- **Data Exfiltration** - Unauthorized data transmission
+- **Network Exploitation** - Port scanning, reverse shells
+- **Context Manipulation** - Session hijacking, delimiter injection
+- **Attack Chains** - Multi-stage attack detection
 
 ## Architecture
-
 ```
 guardrail/
 ├── core/
-│   ├── detector.py        # Pattern-based threat detection
-│   ├── scanner.py         # Attack simulation engine
-│   └── agent_inspector.py # Agent security analysis
+│   ├── detector.py         # Pattern-based detection engine
+│   ├── risk_scorer.py      # Risk scoring (0-100)
+│   ├── agent_inspector.py  # Agent security analysis
+│   └── scanner.py          # Attack simulation
 ├── attacks/
 │   ├── prompt_injection.py # 36 prompt injection patterns
 │   └── tool_misuse.py      # 20 tool misuse patterns
 ├── integrations/
-│   └── langchain_callback.py # Real-time LangChain monitoring
-├── cli/
-│   └── commands/
-│       ├── detect.py      # Pattern detection CLI
-│       └── scan.py        # Full security scan CLI
-└── utils/                 # Utilities
+│   └── langchain_callback.py # Real-time monitoring
+└── cli/
+    └── commands/
+        ├── detect.py       # Threat detection CLI
+        └── scan.py         # Security scan CLI
+```
+
+## API Reference
+
+### ThreatDetector
+```python
+from guardrail import ThreatDetector
+
+detector = ThreatDetector()
+threats = detector.scan(text: str) -> List[Dict]
+```
+
+Returns list of threats:
+```python
+{
+    'id': 'PI-001',
+    'category': 'prompt_injection',
+    'severity': 'HIGH',  # CRITICAL, HIGH, MEDIUM or LOW
+    'description': 'Direct instruction override attempt'
+}
+```
+
+### GuardRailCallback
+```python
+from guardrail import GuardRailCallback
+
+callback = GuardRailCallback(
+    auto_block_threshold: int = 81,    # Score to auto-block (81 = CRITICAL only)
+    review_threshold: int = 31,        # Score to flag for review (31 = MEDIUM+)
+    enable_review_queue: bool = True   # Maintain human review queue
+)
+```
+
+**Methods**
+- `get_events()` - All security events
+- `get_score_summary()` - Score statistics
+- `get_threat_summary()` - Threat breakdown by category/severity
+- `get_review_queue()` - Items pending human review
+- `clear_events()` - Clear event history
+
+**Event structure**
+```python
+{
+    'stage': 'llm_start',
+    'text': 'user input...',
+    'score': 62,
+    'level': 'HIGH',
+    'threats': [...]
+}
+```
+
+### AgentInspector
+```python
+from guardrail.core.agent_inspector import AgentInspector
+
+inspector = AgentInspector()
+
+# Detailed inspection
+info = inspector.inspect(agent) -> Dict
+
+# Security summary
+summary = inspector.get_security_summary(agent) -> Dict
+```
+
+Returns:
+```python
+{
+    'risk_level': 'MEDIUM',  # LOW, MEDIUM or HIGH
+    'risks': [
+        {
+            'category': 'dangerous_tool',
+            'severity': 'HIGH',
+            'description': 'Agent has shell access',
+            'recommendation': 'Restrict shell commands'
+        }
+    ]
+}
 ```
 
 ## Testing
 
-50 comprehensive tests covering all functionality:
-
+49 tests covering all functionality.
 ```bash
 # Run all tests
 pytest
 
-# Run specific test suite
+# Specific test suites
 pytest tests/test_detector.py -v
 pytest tests/test_callback.py -v
 pytest tests/test_agent_inspector.py -v
@@ -139,89 +231,81 @@ pytest tests/test_agent_inspector.py -v
 pytest --cov=guardrail tests/
 ```
 
-## Examples
-
-See [`examples/`](examples/) directory for complete examples:
-
-- `simple_agent_example.py` - Basic GuardRail integration
-- `README.md` - Integration patterns and usage guide
-
 ## Use Cases
 
-### M&A Agentic Platforms
-
-GuardRail provides critical security for AI agents handling sensitive deal data:
-
-- ✓ Prevents prompt injection attacks that could leak confidential deal terms
-- ✓ Blocks unauthorized access to sensitive financial information
-- ✓ Monitors tool usage to prevent data exfiltration
-- ✓ Provides audit trails for compliance requirements
-- ✓ Real-time protection without performance degradation
-
-### Enterprise AI Applications
-
-- API security monitoring
+**Enterprise AI Applications**
 - Chatbot input validation
-- Agent behavior analysis
-- Security event tracking
+- API security monitoring
+- Multi-agent systems
+- Production LLM deployments
 
-## Current Status
+**Security Operations**
+- Real-time threat detection
+- Security audit trails
+- Compliance logging
+- Risk assessment
 
-Production-ready MVP with core security features and LangChain integration.
+**Development**
+- Pre-deployment security testing
+- Agent configuration analysis
+- Attack pattern testing
+- Security-first AI development
 
-## API Reference
+## Human-in-the-Loop Review
 
-### ThreatDetector
-
-```python
-detector = ThreatDetector()
-threats = detector.scan(text: str) -> List[Dict]
-```
-
-Returns list of detected threats with:
-- `id`: Pattern ID
-- `category`: Threat category
-- `severity`: CRITICAL, HIGH, MEDIUM, or LOW
-- `description`: Human-readable description
-
-### GuardRailCallback
-
+GuardRail includes a review queue for handling ambiguous inputs.
 ```python
 callback = GuardRailCallback(
-    block_threats: bool = False,
-    severity_threshold: str = "HIGH"
+    auto_block_threshold=81,
+    review_threshold=31,
+    enable_review_queue=True
 )
+
+# Run agent...
+agent.invoke({"input": "some query"})
+
+# Check review queue
+queue = callback.get_review_queue()
+for item in queue.get_pending():
+    print(f"Score: {item['score']}/100")
+    print(f"Text: {item['text']}")
+    print(f"Threats: {item['threats']}")
+
+    # Human decision
+    if user_approves(item):
+        queue.approve(item['id'])
+    else:
+        queue.reject(item['id'])
 ```
 
-Methods:
-- `get_events()` - Get all security events
-- `get_threat_summary()` - Get summary by category/severity
-- `clear_events()` - Clear recorded events
+## CLI Commands
+```bash
+# Detect threats in text
+guardrail detect "your input text"
 
-### AgentInspector
-
-```python
-inspector = AgentInspector()
-info = inspector.inspect(agent) -> Dict
-summary = inspector.get_security_summary(agent) -> Dict
+# Full security scan (simulates attacks)
+guardrail scan "your system prompt"
 ```
+
+## Performance
+
+- Pattern matching - <1ms overhead per request
+- No external API calls
+- Stateless detection (scales horizontally)
+- Minimal memory footprint
 
 ## Contributing
 
-GuardRail is in active development. See development guide for contribution guidelines.
+Contributions welcome! Areas of interest include additional attack patterns, framework integrations (beyond LangChain), performance optimizations and documentation improvements.
 
 ## License
 
-MIT License - See LICENSE file for details
+MIT License
 
 ## Support
 
-- Documentation: See `docs/` directory
-- Examples: See `examples/` directory
-- Issues: GitHub Issues
-- Security: Report via security@example.com
+- **Documentation** - See this README
+- **Issues** - GitHub Issues
+- **Security** - Report security issues via GitHub Security Advisories
 
----
-
-**Built for security-conscious AI development**
-
+Built for secure AI development
