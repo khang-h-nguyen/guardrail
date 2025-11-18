@@ -25,7 +25,8 @@ class RiskScorer:
         # Keywords that increase suspicion
         self.malicious_keywords = [
             'email', 'send', 'execute', 'delete', 'drop', 'reveal',
-            'exfiltrate', 'steal', 'hack', 'bypass', 'exploit'
+            'exfiltrate', 'steal', 'hack', 'bypass', 'exploit',
+            'secret', 'password', 'credential', 'token', 'key'
         ]
         
         # Keywords that suggest legitimate intent
@@ -69,7 +70,7 @@ class RiskScorer:
         text_lower = text.lower()
         malicious_found = [kw for kw in self.malicious_keywords if kw in text_lower]
         if malicious_found:
-            bonus = len(malicious_found) * 10
+            bonus = len(malicious_found) * 11
             score += bonus
             reasons.append(f"+{bonus}: Malicious keywords: {', '.join(malicious_found)}")
         
