@@ -62,6 +62,7 @@ class GuardRailCallback(BaseCallbackHandler):
             enable_review_queue: Whether to maintain a review queue for human inspection
         """
         super().__init__()
+        self.raise_error = True 
         self.scorer = RiskScorer()
         self.review_queue = ReviewQueue() if enable_review_queue else None
         self.auto_block_threshold = auto_block_threshold
